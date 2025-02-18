@@ -32,7 +32,7 @@ PACKAGE_NAME = 'facebook_business'
 PACKAGE_VERSION = '21.0.5'
 PACKAGE_AUTHOR = 'Facebook'
 PACKAGE_AUTHOR_EMAIL = 'shuotian@meta.com'
-PACKAGE_URL = 'https://github.com/facebook/facebook-python-business-sdk'
+PACKAGE_URL = 'https://github.com/liuliansen/facebook-python-business-sdk'
 PACKAGE_DOWNLOAD_URL = \
     'https://github.com/facebook/facebook-python-business-sdk/tarball/' + PACKAGE_VERSION
 PACKAGES = [
