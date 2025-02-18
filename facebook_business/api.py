@@ -154,7 +154,7 @@ class FacebookAdsApi(object):
     _default_api = None
     _default_account_id = None
 
-    def __init__(self, session, api_version=None, enable_debug_logger=False):
+    def __init__(self, session, api_version=None, enable_debug_logger=False,log_name = 'facebook.api'):
         """Initializes the api instance.
         Args:
             session: FacebookSession object that contains a requests interface
@@ -166,6 +166,7 @@ class FacebookAdsApi(object):
         self._num_requests_attempted = 0
         self._api_version = api_version or self.API_VERSION
         self._enable_debug_logger = enable_debug_logger
+        self._log_name = log_name
 
     def get_num_requests_attempted(self):
         """Returns the number of calls attempted."""
@@ -318,7 +319,9 @@ class FacebookAdsApi(object):
             )
         if self._enable_debug_logger:
             import curlify
-            print(curlify.to_curl(response.request))
+            from logging import getLogger
+            curl = curlify.to_curl(response.request)
+            getLogger(self._log_name).info(f'request:\n{curl}\nresponse:\n{response.text}')
         fb_response = FacebookResponse(
             body=response.text,
             headers=response.headers,
@@ -367,6 +370,13 @@ class FacebookAdsApiBatch(object):
         if failure is not None:
             self._failure_callbacks.append(failure)
         self._requests = []
+        self._relative_data = []
+
+    def set_relative_data(self,data:list):
+        self._relative_data = data
+
+    def add_relative_data(self,data:any):
+        self._relative_data.append(data)
 
     def __len__(self):
         return len(self._batch)
@@ -516,11 +526,12 @@ class FacebookAdsApiBatch(object):
                     call=self._batch[index],
                 )
 
+                inner_relative_data = self._relative_data[index] if 0 <= index < len(self._relative_data) else None
                 if inner_fb_response.is_success():
                     if self._success_callbacks[index]:
-                        self._success_callbacks[index](inner_fb_response)
+                        self._success_callbacks[index](inner_fb_response, inner_relative_data)
                 elif self._failure_callbacks[index]:
-                    self._failure_callbacks[index](inner_fb_response)
+                    self._failure_callbacks[index](inner_fb_response, inner_relative_data)
             else:
                 retry_indices.append(index)
 
@@ -531,6 +542,8 @@ class FacebookAdsApiBatch(object):
             new_batch._success_callbacks = [self._success_callbacks[index]
                                             for index in retry_indices]
             new_batch._failure_callbacks = [self._failure_callbacks[index]
+                                            for index in retry_indices]
+            new_batch._relative_data = [self._relative_data[index]
                                             for index in retry_indices]
             return new_batch
         else:
