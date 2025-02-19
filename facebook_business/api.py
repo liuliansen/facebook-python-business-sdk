@@ -23,6 +23,7 @@ import os
 import json
 import six
 import re
+import inspect
 
 try:
   # Since python 3
@@ -529,9 +530,18 @@ class FacebookAdsApiBatch(object):
                 inner_relative_data = self._relative_data[index] if 0 <= index < len(self._relative_data) else None
                 if inner_fb_response.is_success():
                     if self._success_callbacks[index]:
-                        self._success_callbacks[index](inner_fb_response, inner_relative_data)
+                        sig = inspect.signature(self._success_callbacks[index])
+                        if len(sig.parameters) == 2:
+                            self._success_callbacks[index](inner_fb_response, inner_relative_data)
+                        else:
+                            self._success_callbacks[index](inner_fb_response)
+
                 elif self._failure_callbacks[index]:
-                    self._failure_callbacks[index](inner_fb_response, inner_relative_data)
+                    sig = inspect.signature(self._failure_callbacks[index])
+                    if len(sig.parameters) == 2:
+                        self._failure_callbacks[index](inner_fb_response, inner_relative_data)
+                    else:
+                        self._failure_callbacks[index](inner_fb_response)
             else:
                 retry_indices.append(index)
 
