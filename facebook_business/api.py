@@ -322,7 +322,7 @@ class FacebookAdsApi(object):
             import curlify
             from logging import getLogger
             curl = curlify.to_curl(response.request)
-            getLogger(self._log_name).info(f'request:\n{curl}\nresponse:\n{response.text}')
+            getLogger(self._log_name).info(f'request:\n{curl}\nresponse-headers:\n{response.headers}\nresponse-body:\n{response.text}')
         fb_response = FacebookResponse(
             body=response.text,
             headers=response.headers,
