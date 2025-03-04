@@ -1,5 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
+from collections.abc import Callable
+from typing import Optional
 
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -154,8 +156,9 @@ class FacebookAdsApi(object):
 
     _default_api = None
     _default_account_id = None
+    _resp_callback = None
 
-    def __init__(self, session, api_version=None, enable_debug_logger=False,log_name = 'facebook.api'):
+    def __init__(self, session, api_version=None, enable_debug_logger=False,log_name = 'facebook.api',response_callback:Optional[Callable] = None):
         """Initializes the api instance.
         Args:
             session: FacebookSession object that contains a requests interface
@@ -168,6 +171,7 @@ class FacebookAdsApi(object):
         self._api_version = api_version or self.API_VERSION
         self._enable_debug_logger = enable_debug_logger
         self._log_name = log_name
+        self._resp_callback = response_callback
 
     def get_num_requests_attempted(self):
         """Returns the number of calls attempted."""
@@ -189,10 +193,11 @@ class FacebookAdsApi(object):
         timeout=None,
         debug=False,
         crash_log=True,
+        response_callback:Optional[Callable] = None
     ):
         session = FacebookSession(app_id, app_secret, access_token, proxies,
                                   timeout)
-        api = cls(session, api_version, enable_debug_logger=debug)
+        api = cls(session, api_version, enable_debug_logger=debug,response_callback=response_callback)
         cls.set_default_api(api)
 
         if account_id:
@@ -335,6 +340,9 @@ class FacebookAdsApi(object):
                 'files': files,
             },
         )
+
+        if self._resp_callback:
+            self._resp_callback(fb_response)
 
         if fb_response.is_failure():
             raise fb_response.error()
