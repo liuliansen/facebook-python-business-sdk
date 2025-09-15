@@ -42,7 +42,15 @@ class FacebookRequestError(FacebookError):
         try:
             self._body = json.loads(body)
         except (TypeError, ValueError):
-            self._body = body
+            if isinstance(body, str) and 'Sorry, something went wrong.' in body:
+                self._body = {
+                    'error': {
+                        'code': 2,
+                        'message': 'FB接口崩溃，请稍后重试。'
+                    }
+                }
+            else:
+                self._body = body
 
         self._api_error_code = None
         self._api_error_type = None
